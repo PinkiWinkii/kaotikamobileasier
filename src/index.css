@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: 'Kaotika';
+    src: url('/fonts/kaotika.ttf') format('truetype');
+}
+
+:root {
+  font-family: kaotika,Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  
+}
+body {
+  display: flex;
+  margin: 0px;
+  place-items: center;
+  min-height: 100vh;
+
+
+}
+
+@keyframes saturationAnimation {
+  0% {
+    filter: saturate(1.65);
+  }
+  50% {
+    filter: saturate(0.5);
+  }
+  100% {
+    filter: saturate(1.65);
+  }
+}
+
+@keyframes blueSaturationAnimation {
+  0% {
+    filter: saturate(1.65) hue-rotate(200deg);
+  }
+  50% {
+    filter: saturate(0.5) hue-rotate(200deg);
+  }
+  100% {
+    filter: saturate(1.65) hue-rotate(200deg);
+  }
+}
+
+.animate-saturation {
+  animation: saturationAnimation 2s infinite;
+}
+
+.animate-saturation-blue {
+  animation: blueSaturationAnimation 2s infinite;
+}
