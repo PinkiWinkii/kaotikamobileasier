@@ -11,13 +11,16 @@ const BlockedScreen: React.FC = () => {
   }, []);
 
   return (
-    <div className="absolute top-0 left-0 w-[100%] h-[100%] z-1">
+    <div
+      className="absolute top-0 left-0 w-[100%] h-[100%] z-1"
+      data-testid="blocked-modal">
       <div
         className="absolute top-0 left-0 w-[100%] h-[100%]"
         style={{
           backgroundColor: 'black',
           opacity: 0.8
-        }}></div>
+        }}>
+      </div>
       <div
         className="absolute top-0 left-0 w-[100%] h-[100%]"
         style={{
@@ -26,9 +29,9 @@ const BlockedScreen: React.FC = () => {
           opacity: 1,
           filter: 'brightness(80%)'
         }}></div>
-      <div className="absolute top-[7%] left-0 w-[100%] h-[100%] flex items-start justify-center pt-10">
+      <div className="absolute top-[0%] left-0 w-[100%] h-[100%] flex items-start justify-center pt-10">
         <h1
-          className="text-white text-4xl"
+          className="text-white text-4xl top-[7%] absolute"
           style={{ fontFamily: 'Kaotika' }}>
           Waiting for your turn<span style={{ visibility: 'hidden' }}>...</span>
           <span style={{ position: 'absolute', marginLeft: '-0.85rem' }}>{dots}</span>

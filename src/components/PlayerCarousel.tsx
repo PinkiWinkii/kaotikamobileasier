@@ -1,15 +1,19 @@
+import React from 'react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useMotionValue, animate, PanInfo } from 'framer-motion';
 import socket from '../sockets/socket';
 import { Player } from '../interfaces/Player';
+import { SOCKET_EMIT_EVENTS } from '../sockets/events';
 
 interface PlayerCarouselProps {
   setSelectedPlayer: (player: Player) => void;
   selectedPlayer: Player;
   displayedPlayers: Player[];
+  selectedPlayerIndex: number;
+  setSelectedPlayerIndex: (index: number) => void;
 }
 
-const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, displayedPlayers, selectedPlayer }) => {
+const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, displayedPlayers, selectedPlayer, selectedPlayerIndex, setSelectedPlayerIndex}) => {
 
   // We extend with placeholders at the beginning and end to keep the first and last elements centered
   const extendedPlayers = [
@@ -23,7 +27,20 @@ const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, disp
   const MAX_SELECTABLE = extendedPlayers.length - 2;
 
   // State to know which card is selected
-  const [selectedIndex, setSelectedIndex] = useState(MIN_SELECTABLE);
+
+  useEffect(() => {
+
+
+
+    if (selectedPlayerIndex !== undefined) {
+      if(selectedPlayerIndex === 0) {
+        selectedPlayerIndex = 1;
+      }
+      console.log('SelectedPlayerIndex before clampIndex: ', selectedPlayerIndex);
+      const clampedIndex = Math.min(Math.max(selectedPlayerIndex, MIN_SELECTABLE), MAX_SELECTABLE);
+      setSelectedPlayerIndex(clampedIndex);
+    }
+  }, [selectedPlayerIndex]);
 
   // We use a MotionValue for x
   const x = useMotionValue(0);
@@ -81,19 +98,30 @@ const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, disp
       stiffness: 300,
       damping: 25,
     });
-  },
-  [containerWidth, cardWidth, GAP, maxDrag, x]);
+  }, [containerWidth, cardWidth, GAP, maxDrag, x]);
 
-  // When selectedIndex changes => center
+  // When selectedPlayerIndex changes => center
   useEffect(() => {
-    centerOnIndex(selectedIndex);
-    setSelectedPlayer(displayedPlayers[selectedIndex - 1]);
-  }, [selectedIndex, centerOnIndex, displayedPlayers, setSelectedPlayer]);
+    if(selectedPlayerIndex === 0) {
+      selectedPlayerIndex = 1;
+    }
+    console.log('selectedPlayerIndex: ', selectedPlayerIndex);
+    
+    centerOnIndex(selectedPlayerIndex);
+    setSelectedPlayer(displayedPlayers[selectedPlayerIndex - 1]);
+  }, [selectedPlayerIndex, centerOnIndex, displayedPlayers, setSelectedPlayer]);
 
   useEffect(() => {
     if (selectedPlayer) {
+      console.log('Selected player: ', selectedPlayer.nickname);
+      console.log('Selected player is betrayer? ', selectedPlayer.isBetrayer);
+      console.log('Array of DISPLAYED players: ', displayedPlayers);
+      console.log('Array of EXTENDED players: ', extendedPlayers);
+      
+      
+      
       console.log('mobile-setSelectedPlayer SENT: ', selectedPlayer._id);
-      socket.emit('mobile-setSelectedPlayer', selectedPlayer._id);
+      socket.emit(SOCKET_EMIT_EVENTS.SET_SELECTED_PLAYER, selectedPlayer._id);
     }
   }, [selectedPlayer]);
 
@@ -101,9 +129,9 @@ const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, disp
   useEffect(() => {
     if (displayedPlayers.length === 0) { return; }
     const maxPossibleIndex = displayedPlayers.length;
-    const newIndex = Math.min(maxPossibleIndex, selectedIndex);
-    setSelectedIndex(newIndex);
-  }, [displayedPlayers, selectedIndex]);
+    const newIndex = Math.min(maxPossibleIndex, selectedPlayerIndex);
+    setSelectedPlayerIndex(newIndex);
+  }, [displayedPlayers, selectedPlayerIndex]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent, info: PanInfo) => {
     if (!cardWidth) return;
@@ -111,25 +139,27 @@ const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, disp
     const offsetX = info.offset.x;
     const threshold = 50;
 
-    let newIndex = selectedIndex;
+    let newIndex = selectedPlayerIndex;
 
     // threshold to the left => next
     if (offsetX < -threshold) {
-      newIndex = selectedIndex + 1;
+      newIndex = selectedPlayerIndex + 1;
     }
     // threshold to the right => previous
     else if (offsetX > threshold) {
-      newIndex = selectedIndex - 1;
+      newIndex = selectedPlayerIndex - 1;
     }
 
     // Prevent passing beyond placeholders
     if (newIndex < MIN_SELECTABLE) newIndex = MIN_SELECTABLE;
     if (newIndex > MAX_SELECTABLE) newIndex = MAX_SELECTABLE;
 
-    if (newIndex !== selectedIndex) {
-      setSelectedIndex(newIndex);
+    if (newIndex !== selectedPlayerIndex) {
+      console.log('SETTING selected player index with new index');
+      setSelectedPlayerIndex(newIndex);
     } else {
-      centerOnIndex(selectedIndex);
+      console.log('CENTERING selected player index with new index');
+      centerOnIndex(selectedPlayerIndex);
     }
   };
 
@@ -140,14 +170,15 @@ const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, disp
     <div
       ref={containerRef}
       className="flex items-center overflow-hidden w-[80vw]"
-      style={{ height: cardHeight + 100 }}>
+      style={{ height: cardHeight + 100 }}
+      data-testid="player-carousel">
       <motion.div
         className="flex gap-4"
         style={{ x }}
         drag="x"
         onDragEnd={handleDragEnd}>
         {extendedPlayers.map((player, index) => {
-          const isActive = index === selectedIndex;
+          const isActive = index === selectedPlayerIndex;
           const frameSrc = player?.isBetrayer ? '/images/carousel-red-frame.webp' : '/images/carousel-blue-frame.webp';
           const fallbackAvatar = player?.isBetrayer
             ? '/images/too_many_request_betrayer.webp'
@@ -171,8 +202,10 @@ const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, disp
                 <>
                   <img
                     src={frameSrc}
-                    className="absolute z-10 w-full h-full" />
+                    className="absolute z-10 w-full h-full"
+                  />
                   <img
+                    loading='lazy'
                     src={player.avatar}
                     alt={player.name}
                     className="w-full absolute top-1/2 -translate-y-[42%] z-0"
@@ -186,12 +219,12 @@ const PlayerCarousel: React.FC<PlayerCarouselProps> = ({ setSelectedPlayer, disp
                     style={{ maskImage: `linear-gradient(to right, white ${actualPercent}%, transparent ${actualPercent + 10}%)` }}
                     src="/images/carousel-hp-bar.webp"
                     alt="?"
-                    className="absolute top-1/2 -translate-y-[42%] z-0"
-                  />  
+                    className="w-[75%] left-5 absolute bottom-5 z-1"
+                  />
                   <img
                     src="/images/carousel-bg-hp-bar.webp"
                     alt="?"
-                    className="absolute top-1/2 -translate-y-[42%] z-0"
+                    className="w-[75%] left-5 absolute bottom-5 z-0"
                   />
                 </>
               )}

@@ -1,9 +1,12 @@
+// src/screens/LoginScreen.tsx
 import React, { ChangeEvent, useState } from 'react';
 import Spinner from '../components/Spinner';
 import socket from '../sockets/socket';
 import { SOCKET_EVENTS } from '../sockets/events';
 import { getPlayerByEmail } from '../api/player';
 import { Player } from '../interfaces/Player';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, provider } from '../api/firebase/firebaseConfig';
 
 interface LoginScreenInterface {
   email: string;
@@ -12,8 +15,12 @@ interface LoginScreenInterface {
   setPlayer: (player: Player | null) => void;
 }
 
-const LoginScreen: React.FC<LoginScreenInterface> = ({ email, setEmail, setIsLoggedIn, setPlayer }) => {
-
+const LoginScreen: React.FC<LoginScreenInterface> = ({
+  email,
+  setEmail,
+  setIsLoggedIn,
+  setPlayer,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -45,10 +52,39 @@ const LoginScreen: React.FC<LoginScreenInterface> = ({ email, setEmail, setIsLog
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    provider.setCustomParameters({ prompt: 'select_account' });
+    setIsLoading(true);
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      if (user.email) {
+        const playerData = await getPlayerByEmail(user.email);
+        socket.emit(SOCKET_EVENTS.SEND_SOCKETID, user.email);
+        setIsLoggedIn(true);
+        setIsLoading(false);
+        setPlayer(playerData);
+      } else {
+        setErrorMessage('No se pudo obtener el correo electrónico del usuario.');
+      }
+    } catch (error: unknown) {
+      console.error('Error during Google sign-in:', error);
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage('An unknown error occurred during Google sign-in.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div
       className="flex bg-black p-4 items-center justify-center h-screen w-screen"
-      style={{ backgroundImage: 'url(/images/login-background.webp)', backgroundSize: '100% 100%' }}>
+      style={{ backgroundImage: 'url(/images/login-background.webp)', backgroundSize: '100% 100%' }}
+      data-testid="login-screen"
+    >
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
           <Spinner text={'Retrieving player from database, please wait...'} />
@@ -73,12 +109,12 @@ const LoginScreen: React.FC<LoginScreenInterface> = ({ email, setEmail, setIsLog
             style={{ fontFamily: 'Kaotika' }}
             onChange={handleEmailChange}></input>
         </div>
-
         <button
           className="mt-[5%] flex flex-col items-center justify-center bg-gray-500 h-[15%]"
           onClick={handleEnterBattle}
           style={{ filter: email === '' ? 'grayscale(100%)' : 'none', transition: 'filter 0.3s ease', pointerEvents: email === '' ? 'none' : 'auto', width: '45%', height: 'auto' }}
-          disabled={email === ''}>
+          disabled={email === ''}
+          hidden= {false}>
           <img
             src="/images/enter-button.webp"
             alt="Enter the battle"
@@ -86,17 +122,32 @@ const LoginScreen: React.FC<LoginScreenInterface> = ({ email, setEmail, setIsLog
           <span
             className="text-white mt-2 text-3xl mb-2"
             style={{ fontFamily: 'Kaotika', position: 'absolute' }}>ENTER</span>
-        </button>
+        </button> 
 
-        <div
-          className="text-red-500 mt-2 text-2xl"
-          style={{ fontFamily: 'Kaotika', minHeight: '2em' }}>
-          {errorMessage || <span>&nbsp;</span>}
-        </div>
+        <button
+          className="mt-[5%] flex flex-col items-center justify-center bg-gray-500 h-[15%]"
+          onClick={handleGoogleSignIn}
+          style={{ width: '45%', height: 'auto' }}
+          hidden= {true}>
+          <img
+            src="/images/enter-button.webp"
+            alt="Enter the battle"
+            style={{ width: '100%' }} />
+          <span
+            className="text-white mt-2 text-3xl mb-2"
+            style={{ fontFamily: 'Kaotika', position: 'absolute' }}>ENTER</span>
+        </button> 
+        {errorMessage && (
+          <div
+            className="mt-4 text-red-500"
+            style={{ fontFamily: 'Kaotika' }}>
+            {errorMessage}
+          </div>
+        )}
       </div>
     </div>
   );
-
 };
-
+  
 export default LoginScreen;
+  
