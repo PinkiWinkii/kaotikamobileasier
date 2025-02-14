@@ -14,7 +14,7 @@ import { Player } from '../interfaces/Player';
 
 import { Potion } from '../interfaces/Potion';
 import socket from '../sockets/socket';
-import { clearListenToServerEventsBattleScreen, listenToChangeTurn, listenToGameEnded, listenToRemovePlayer, listenToServerEventsBattleScreen, listenToUpdatePlayer } from '../sockets/socketListeners';
+import { clearListenToServerEventsBattleScreen, listenToChangeTurn, listenToGameEnded, listenToGameReset, listenToRemovePlayer, listenToServerEventsBattleScreen, listenToUpdatePlayer } from '../sockets/socketListeners';
 import DeadScreen from './DeadScreen';
 import { SOCKET_EMIT_EVENTS } from '../sockets/events';
 interface BattleScreenProps {
@@ -46,6 +46,8 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
   // ⬇️ SETTERS CALLED HERE FOR ESLINT TO IGNORE NOT CALLING THEM, DELETE AFTER SOCKET IMPLEMENTATION⬇️ //
   setGameEnded;
   setWinner;
+  setIsLoggedIn;
+  setEmail;
 
   const factionsSetters = {
     'kaotika': setKaotikaPlayers,
@@ -56,8 +58,9 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
     listenToServerEventsBattleScreen(setKaotikaPlayers, setDravokarPlayers);
     listenToUpdatePlayer(factionsSetters, setPlayer, player);
     listenToRemovePlayer(setKaotikaPlayers, setDravokarPlayers, kaotikaPlayers, dravokarPlayers, setUserDead, player);
-    listenToChangeTurn(setIsMyTurn, player, kaotikaPlayers, dravokarPlayers, setSelectedPlayerIndex);
+    listenToChangeTurn(setIsMyTurn, player, kaotikaPlayers, dravokarPlayers, setSelectedPlayerIndex, setFilteredFaction);
     listenToGameEnded(setGameEnded, setWinner); 
+    listenToGameReset(setGameEnded, setIsMyTurn, setIsLoggedIn, setEmail, setPlayer, setKaotikaPlayers, setDravokarPlayers);
 
     console.log('KAOTIKA PLAYERS: ', kaotikaPlayers);
     console.log('DRAVOKAR PLAYERS: ', dravokarPlayers);
@@ -169,9 +172,6 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
 
       {gameEnded && (
         <GameEndingModal
-          setPlayer={setPlayer}
-          setIsLoggedIn={setIsLoggedIn}
-          setEmail={setEmail}
           role={player.role}
           winner={winner}  // Pass winner to GameEndingModal
         />

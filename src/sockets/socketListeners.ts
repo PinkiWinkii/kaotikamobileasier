@@ -4,6 +4,8 @@ import { Player } from '../interfaces/Player';
 import { removeSelectedPlayerFromTeams, setUserStatusToDeadIfIdMatches, updatePlayerAttributes, updateSessionPlayerAttributesIfIdMatches } from '../utils/players';
 import { SOCKET_EMIT_EVENTS, SOCKET_EVENTS } from './events';
 import socket from './socket';
+import { resetAllStates } from '../utils/resetGame';
+import { Factions } from '../interfaces/Factions';
 
 export const listenToServerEventsBattleScreen = (setKaotikaPlayers: (players: Player[]) => void, setDravokarPlayers: (players: Player[]) => void) => {
   socket.on(SOCKET_EVENTS.RECIVE_USERS, (players: {kaotika: Player[], dravokar: Player[]}) => {
@@ -17,7 +19,7 @@ export const listenToServerEventsBattleScreen = (setKaotikaPlayers: (players: Pl
   });
 };
 
-export const listenToChangeTurn = (setIsMyTurn: (turn: boolean) => void,player: Player | null, kaotikaPlayers: Player[], dravokarPlayers: Player[], setSelectedPlayerIndex: (index: number) => void ) => {
+export const listenToChangeTurn = (setIsMyTurn: (turn: boolean) => void,player: Player | null, kaotikaPlayers: Player[], dravokarPlayers: Player[], setSelectedPlayerIndex: (index: number) => void, setFilteredFactions: React.Dispatch<React.SetStateAction<Factions | undefined>>) => {
   socket.on(SOCKET_EVENTS.TURN_CHANGE, (_id: string) => {
     console.log(`'${SOCKET_EVENTS.TURN_CHANGE}' socket received.`);
     console.log('FIRST DRAVOKAR PLAYER NOW: ', dravokarPlayers);
@@ -25,12 +27,14 @@ export const listenToChangeTurn = (setIsMyTurn: (turn: boolean) => void,player: 
     if (player?._id === _id) {
       setIsMyTurn(true);
       if (player && !player.isBetrayer) {
+        setFilteredFactions('DRAVOKAR');
         setSelectedPlayerIndex(dravokarPlayers.length);
         setSelectedPlayerIndex(1);
       
         socket.emit(SOCKET_EMIT_EVENTS.SET_SELECTED_PLAYER, dravokarPlayers[0]._id);
       }
       else {
+        setFilteredFactions('KAOTIKA');
         setSelectedPlayerIndex(kaotikaPlayers.length);
         setSelectedPlayerIndex(1);
 
@@ -74,6 +78,15 @@ export const listenToRemovePlayer = (setKaotikaPlayers:React.Dispatch<React.SetS
     removeSelectedPlayerFromTeams(kaotikaPlayers, dravokarPlayers, setKaotikaPlayers, setDravokarPlayers, playerId);
     setUserStatusToDeadIfIdMatches(setUserDead, player._id, playerId);
   });
+
+  socket.on(SOCKET_EVENTS.KILLED_PLAYER, (playerId: string) => {
+
+    console.log(`'${SOCKET_EVENTS.KILLED_PLAYER}' socket received.`);
+    console.log('Player ID to remove:', playerId);
+
+    removeSelectedPlayerFromTeams(kaotikaPlayers, dravokarPlayers, setKaotikaPlayers, setDravokarPlayers, playerId);
+    setUserStatusToDeadIfIdMatches(setUserDead, player._id, playerId);
+  });
 };
 
 export const listenToDisconnections = (setdisconnection: (disconnection: boolean) => void) => {
@@ -84,6 +97,19 @@ export const listenToDisconnections = (setdisconnection: (disconnection: boolean
   socket.on(SOCKET_EVENTS.CONNECT, () => {
     console.log(`'${SOCKET_EVENTS.CONNECT}' socket received.`);
     setdisconnection(false);
+  });
+};
+
+export const listenToGameReset = (setGameEnded: (gameEnded: boolean) => void, 
+  setIsMyTurn: (turn: boolean) => void, 
+  setIsLoggedIn: (turn: boolean) => void, 
+  setEmail: (email: string) => void, 
+  setPlayer: React.Dispatch<React.SetStateAction<Player | null>>,
+  setKaotikaPlayers: (players: Player[]) => void, 
+  setDravokarPlayers: (players: Player[]) => void) => {
+  socket.on(SOCKET_EVENTS.GAME_RESET, () => {
+    console.log(`'${SOCKET_EVENTS.GAME_RESET}' socket received.`);
+    resetAllStates(setGameEnded, setIsMyTurn, setIsLoggedIn, setEmail, setPlayer, setKaotikaPlayers, setDravokarPlayers);
   });
 };
 
@@ -109,6 +135,9 @@ export const clearListenToServerEventsBattleScreen = (): void => {
 
   socket.off(SOCKET_EVENTS.TURN_CHANGE);
   console.log(`'${SOCKET_EVENTS.TURN_CHANGE}' socket cleared.`);
+
+  socket.off(SOCKET_EVENTS.GAME_RESET);
+  console.log(`'${SOCKET_EVENTS.GAME_RESET}' socket cleared.`);
   
 };
 
