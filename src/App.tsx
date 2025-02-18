@@ -13,11 +13,13 @@ const App: React.FC = () => {
     isLoggedIn,
     email,
     player,
+    isMyTurn,
     isDisconnected,
     permanentlyDisconnected,
     setIsLoggedIn,
     setEmail,
     setPlayer,
+    setIsMyTurn,
     setIsDisconnected,
     setPermanentlyDisconnected,
   } = useStore();
@@ -37,7 +39,12 @@ const App: React.FC = () => {
       {isLoggedIn && player ? (
         <BattleScreen
           potions={potions}
-        
+          player={player}
+          setPlayer={setPlayer}
+          isMyTurn={isMyTurn}
+          setIsMyTurn={setIsMyTurn}
+          setIsLoggedIn={setIsLoggedIn}
+          setEmail={setEmail}
         />
       ) : (
         <LoginScreen

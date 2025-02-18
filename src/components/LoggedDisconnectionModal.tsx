@@ -4,7 +4,7 @@ import { DisconectionText } from '../constants/DisconectionTextConstants';
 import { DisconectionImages } from '../constants/DisconectionImagesConstants';
 
 interface LoggedDisconnectionModalProps {
-  setPlayer: (player: Player) => void;
+  setPlayer: (player: Player | null) => void;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setEmail: (email: string) => void;
   setPermanentlyDisconnected: (isDisconnected: boolean) => void;
@@ -13,7 +13,7 @@ const LoggedDisconnectionModal: React.FC<LoggedDisconnectionModalProps> = ({ set
   const disconectionText = DisconectionText;
   const imgUrl = DisconectionImages;
   const handleReconnect = () => {
-    setPlayer(null!);
+    setPlayer(null);
     setIsLoggedIn(false);
     setEmail('');
     setPermanentlyDisconnected(false);
