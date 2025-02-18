@@ -1,10 +1,8 @@
-import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react'; // Importar act para simular el paso del tiempo
 import * as React from 'react';
-import { ONLINE_USERS_MOCK } from '../../../__mocks__/mockPlayers';
-import BlockedScreen from '../../../components/BlockedScreen';
-import useStore from '../../../store/useStore';
 React; //Add this line to disable the unused variable error for Vercel deployment
+import { render, screen } from '@testing-library/react'; // Importar act para simular el paso del tiempo
+import '@testing-library/jest-dom';
+import BlockedScreen from '../../../components/BlockedScreen';
 
 beforeAll(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {}); // Silenciar logs
@@ -18,33 +16,24 @@ jest.mock('../../../sockets/socket', () => ({
   off: jest.fn(),
 }));
 
-jest.mock('../../../store/useStore');
-
 describe('LoggedDisconnectionModal Component', () => {
   it('should render the LoggedDisconnectionModal for role -ACOLYTE-', () => {
-    (useStore as unknown as jest.Mock).mockReturnValue({
-      player: ONLINE_USERS_MOCK[0],
-    });
-    render(<BlockedScreen />);
+    
+    render(<BlockedScreen role='acolyte'/>);
 
     const modalComponent = screen.getByTestId('blocked-modal');
     expect(modalComponent).toBeInTheDocument();
   });
   it('should render the LoggedDisconnectionModal for role -MORTIMER-', () => {
-    (useStore as unknown as jest.Mock).mockReturnValue({
-      player: ONLINE_USERS_MOCK[4], // Position of the mock player with role mortimer
-    });
-    render(<BlockedScreen />);
+    
+    render(<BlockedScreen role='mortimer'/>);
 
     const modalComponent = screen.getByTestId('blocked-modal');
     expect(modalComponent).toBeInTheDocument();
   });
 
   it('should animate dots over time', () => {
-    (useStore as unknown as jest.Mock).mockReturnValue({
-      player: ONLINE_USERS_MOCK[0],
-    });
-    render(<BlockedScreen />);
+    render(<BlockedScreen role='' />);
 
     const textElement = screen.getByText('Waiting for your turn');
     

@@ -2,6 +2,7 @@ import * as React from 'react';
 React;
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { mockPotions } from '../../../__mocks__/mockPotions';
 import PotionContainer from '../../../components/PotionContainer';
 
 beforeAll(() => {
@@ -12,8 +13,10 @@ beforeAll(() => {
 
 describe('PotionContainer Component', () => {
   it('should render the PotionContainer', () => {
+    const potions = mockPotions;
     
     render(<PotionContainer
+      potions={potions}
       onClick={() => {}}
     />);
 

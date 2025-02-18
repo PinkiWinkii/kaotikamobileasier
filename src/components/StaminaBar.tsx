@@ -1,13 +1,13 @@
 import React from 'react';
-import useStore from '../store/useStore';
 
 interface StaminaBarProps {
+  base_resistance: number
+  resistance: number
 }
 
-const StaminaBar: React.FC<StaminaBarProps> = () => {
-  const {player, maxPercent} = useStore();
+const StaminaBar: React.FC<StaminaBarProps> = ({ resistance, base_resistance }) => {
 
-  const actualPercent = player.attributes.resistance / player.base_attributes.resistance * maxPercent;
+  const actualPercent = resistance / base_resistance * 100;
 
   return (
     <div

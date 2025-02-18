@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
-import { mockDividedPlayers } from '../../../__mocks__/mockPlayers';
 import DeadScreen from '../../../pages/DeadScreen';
-import useStore from '../../../store/useStore';
-
 React;
 
 beforeAll(() => {
@@ -19,18 +16,17 @@ jest.mock('../../../sockets/socket', () => ({
   off: jest.fn(),
 }));
 
-jest.mock('../../../store/useStore');
-
 describe('DeadScreen screen', () => {
-  beforeEach(() => {
-    (useStore as unknown as jest.Mock).mockReturnValue({
-      player: mockDividedPlayers.kaotika[0],
-      setSelectedPlayer: jest.fn(),
-    });
-  });
   it('should render the DeadScreen for role -ACOLYTE- ', () => {
     
-    render(<DeadScreen />);
+    render(<DeadScreen role='acolyte'/>);
+
+    const deadScreen = screen.getByTestId('dead-screen');
+    expect(deadScreen).toBeInTheDocument();
+  });
+  it('should render the DeadScreen for role -MORTIMER- ', () => {
+    
+    render(<DeadScreen role='mortimer'/>);
 
     const deadScreen = screen.getByTestId('dead-screen');
     expect(deadScreen).toBeInTheDocument();

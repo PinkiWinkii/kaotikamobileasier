@@ -1,25 +1,18 @@
 import React from 'react';
-import useStore from '../store/useStore';
-import socket from '../sockets/socket';
-import { SOCKET_EMIT_EVENTS } from '../sockets/events';
+import { Player } from '../interfaces/Player';
 
-const AttackButton: React.FC = () => {
+interface AttackButtonProps {
+  onClick: () => void;
+  isMyTurn: boolean;
+  selectedPlayer?: Player | undefined;
+  player: Player | undefined;
+}
 
-  const { isMyTurn, setIsMyTurn, selectedPlayer, player } = useStore();
-
-  const handleOnClick = () => {
-    console.log('Attacking ', selectedPlayer?._id);
-    socket.emit(SOCKET_EMIT_EVENTS.ATTACK, selectedPlayer?._id);
-    setIsMyTurn(false);
-  };
-
+const AttackButton: React.FC<AttackButtonProps> = ({ onClick, isMyTurn, selectedPlayer, player }) => {
   console.log('AttackButton rendered, selectedPlayer is betrayer? ', selectedPlayer?.isBetrayer);
 
   const sameFaction = player?.isBetrayer === selectedPlayer?.isBetrayer;
   const isDisabled = !isMyTurn || sameFaction;
-
-  console.log('sameFaction:', sameFaction); // Log sameFaction value
-  console.log('isDisabled:', isDisabled); // Log isDisabled value
 
   return (
     <button
@@ -32,7 +25,7 @@ const AttackButton: React.FC = () => {
         backgroundPosition: 'center',
         filter: isMyTurn && !sameFaction ? 'saturate(1)' : 'saturate(0)',
       }}
-      onClick={handleOnClick}
+      onClick={onClick}
       disabled={isDisabled}
       aria-disabled={isDisabled}
       data-testid="attack-button"
