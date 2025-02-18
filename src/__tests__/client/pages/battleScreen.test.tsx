@@ -2,9 +2,9 @@ import * as React from 'react';
 React;
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import useStore from '../../../store/useStore';
 import { mockDividedPlayers } from '../../../__mocks__/mockPlayers';
 import BattleScreen from '../../../pages/BattleScreen';
-import { mockPotions } from '../../../__mocks__/mockPotions';
 
 jest.mock('../../../sockets/socket', () => ({
   on: jest.fn(),
@@ -12,27 +12,28 @@ jest.mock('../../../sockets/socket', () => ({
   off: jest.fn(),
 }));
 
+jest.mock('../../../store/useStore');
+
 beforeAll(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {}); // Silenciar logs
   jest.spyOn(console, 'error').mockImplementation(() => {}); // Silenciar errores
   jest.spyOn(console, 'warn').mockImplementation(() => {}); // Silenciar advertencias
 });
 
+beforeEach(() => {
+  (useStore as unknown as jest.Mock).mockReturnValue({
+    player: mockDividedPlayers.kaotika[0],
+    kaotikaPlayers: mockDividedPlayers.kaotika || [],
+    dravokarPlayers: mockDividedPlayers.dravokar || [],
+    setSelectedPlayerIndex: jest.fn(),
+    setSelectedPlayer: jest.fn(),
+  });
+});
+
 describe('BattleScreen screen', () => {
   it('should render the BattleScreen', () => {
-    const player = mockDividedPlayers.kaotika[0];
-    const potions = mockPotions;
-    
-    render(<BattleScreen
-      potions={potions}
-      player={player}
-      setPlayer={() => player}
-      isMyTurn={true}
-      setIsMyTurn={() => true}
-      setIsLoggedIn={() => true}
-      setEmail={() => player.email}
-    />);
-
+    render(<BattleScreen/>);
+    screen.debug();
     const battleScreen = screen.getByTestId('battle-screen');
     expect(battleScreen).toBeInTheDocument();
   });
